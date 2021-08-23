@@ -17,13 +17,17 @@ async def paginate(
     session: AsyncSession,
     query: Select,
     params: Optional[AbstractParams] = None,
+    is_unique: bool = False,
 ) -> AbstractPage:  # pragma: no cover # FIXME: fix coverage report generation
     params = resolve_params(params)
 
     total = await session.scalar(select(func.count()).select_from(query.subquery()))  # type: ignore
     items = await session.execute(paginate_query(query, params))
 
+    if is_unique:
+        return create_page([*items.unique().scalars()], total, params)
     return create_page([*items.scalars()], total, params)
+
 
 
 __all__ = ["paginate"]
